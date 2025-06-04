@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  username          String    @unique
+  password          String
+  sentRequests      FriendRequest[] @relation("SentRequests")
+  receivedRequests  FriendRequest[] @relation("ReceivedRequests")
+  friends           User[]    @relation("UserFriends")
+  friendOf          User[]    @relation("UserFriends")
+  channels          Channel[] @relation("UserChannels")
+  messages          Message[]
+  dmMessagesFrom    DMMessage[] @relation("DMFrom")
+  dmMessagesTo      DMMessage[] @relation("DMTo")
+}
+
+model FriendRequest {
+  id         Int    @id @default(autoincrement())
+  from       User   @relation("SentRequests", fields: [fromId], references: [id])
+  fromId     Int
+  to         User   @relation("ReceivedRequests", fields: [toId], references: [id])
+  toId       Int
+  status     String // "pending", "accepted", "declined"
+  createdAt  DateTime @default(now())
+}
+
+model Channel {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  users     User[]   @relation("UserChannels")
+  messages  Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  channelId Int
+}
+
+model DMMessage {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  from      User     @relation("DMFrom", fields: [fromId], references: [id])
+  fromId    Int
+  to        User     @relation("DMTo", fields: [toId], references: [id])
+  toId      Int
+} 
